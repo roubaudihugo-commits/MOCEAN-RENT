@@ -277,8 +277,8 @@ function toggleHistory(btn) {
   showHistory = !showHistory;
   btn.classList.toggle('active', showHistory);
   btn.innerHTML = showHistory
-    ? '<i class="ti ti-eye-off"></i> Masquer l'historique'
-    : '<i class="ti ti-history"></i> Afficher l'historique';
+    ? '<i class="ti ti-eye-off"></i> Masquer l\'historique'
+    : '<i class="ti ti-history"></i> Afficher l\'historique';
   if (Object.keys(allData.parc).length) renderAll();
 }
 
