@@ -104,6 +104,8 @@ body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
 .vehicle-table tr.row-vendu td { opacity: 0.7; }
 .vehicle-table tr.row-alert td { background: #FFFBF0; }
 .vehicle-table tr.row-alert:hover td { background: #FFF5D6; }
+.vehicle-table tr.row-history td { opacity: 0.5; background: var(--surface-2); font-style: italic; }
+.vehicle-table tr.row-history:hover td { opacity: 0.7; }
 
 .plate { font-family: 'Courier New', monospace; font-size: 11px; background: var(--surface-2); border: 1px solid var(--border); padding: 2px 7px; border-radius: 4px; letter-spacing: 0.3px; white-space: nowrap; }
 .badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px; }
@@ -208,6 +210,11 @@ body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
     <div class="kpi-sub">≥ 8,5 mois</div>
   </div>
   <div class="kpi">
+    <div class="kpi-label"><i class="ti ti-speedboat"></i> Alertes km</div>
+    <div class="kpi-val red" id="kpi-km-alert">—</div>
+    <div class="kpi-sub">≥ 19 000 km</div>
+  </div>
+  <div class="kpi">
     <div class="kpi-label"><i class="ti ti-refresh"></i> Renouvellements</div>
     <div class="kpi-val amber" id="kpi-renew">—</div>
     <div class="kpi-sub">véhicules attendus</div>
@@ -221,6 +228,8 @@ body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
   <button class="filter-btn" onclick="setFilter('Meaux',this)"><i class="ti ti-map-pin"></i> Meaux</button>
   <button class="filter-btn" onclick="setFilter('sold',this)"><i class="ti ti-tag"></i> Vendus</button>
   <button class="filter-btn" onclick="setFilter('alert',this)"><i class="ti ti-alert-triangle"></i> Alertes DEG</button>
+  <button class="filter-btn" onclick="setFilter('km-alert',this)"><i class="ti ti-gauge"></i> Alertes km</button>
+  <button class="filter-btn toggle-history" id="btn-history" onclick="toggleHistory(this)"><i class="ti ti-history"></i> Afficher l'historique</button>
 </nav>
 
 <div class="section-title" id="parc-title"><i class="ti ti-building-store"></i> Parc par agence</div>
@@ -230,6 +239,10 @@ body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; }
   <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span> &lt; 7 mois</span>
   <span class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span> 7–8,5 mois</span>
   <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span> ≥ 8,5 mois — alerte</span>
+  <span style="font-weight:600;color:var(--text);margin-left:8px;">Kilométrage :</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span> &lt; 10 000 km</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span> 10–19 000 km</span>
+  <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span> ≥ 19 000 km — alerte</span>
 </div>
 
 <div id="loading" class="loading-state">
@@ -258,6 +271,16 @@ document.getElementById('footer-date').textContent = now.toLocaleDateString('fr-
 
 let allData = { parc: {}, renewals: [] };
 let currentFilter = 'all';
+let showHistory = false;
+
+function toggleHistory(btn) {
+  showHistory = !showHistory;
+  btn.classList.toggle('active', showHistory);
+  btn.innerHTML = showHistory
+    ? '<i class="ti ti-eye-off"></i> Masquer l'historique'
+    : '<i class="ti ti-history"></i> Afficher l'historique';
+  if (Object.keys(allData.parc).length) renderAll();
+}
 
 // Calculer les mois depuis la date DEG
 function monthsSinceDEG(dateStr) {
@@ -287,8 +310,8 @@ function degClass(months) {
 
 function kmClass(km) {
   const k = parseInt(km) || 0;
-  if (k > 15000) return 'high';
-  if (k > 8000) return 'mid';
+  if (k >= 19000) return 'high';
+  if (k > 10000) return 'mid';
   return 'low';
 }
 
@@ -343,10 +366,12 @@ function updateKPIs() {
     const m = monthsSinceDEG(v['Date DEG']);
     return m !== null && m >= 8.5;
   });
+  const kmAlerts = all.filter(v => (parseInt(v['Kilométrage']||0) >= 19000) && !(v['Sortie Système'] && v['Sortie Système'].toString().trim() !== ''));
   document.getElementById('kpi-total').textContent = all.length;
   document.getElementById('kpi-active').textContent = active.length;
   document.getElementById('kpi-sold').textContent = sold.length;
   document.getElementById('kpi-alert').textContent = alerts.length;
+  document.getElementById('kpi-km-alert').textContent = kmAlerts.length;
   document.getElementById('kpi-renew').textContent = (allData.renewals||[]).length;
 }
 
@@ -358,6 +383,11 @@ function renderParc() {
   agencyOrder.forEach(agence => {
     let vehicles = allData.parc[agence] || [];
     if (!vehicles.length) return;
+
+    // Masquer l'historique (véhicules avec Sortie Système renseignée) sauf si showHistory
+    if (!showHistory) {
+      vehicles = vehicles.filter(v => !v['Sortie Système'] || v['Sortie Système'].toString().trim() === '');
+    }
 
     // Filtrage
     if (currentFilter !== 'all' && currentFilter !== 'sold' && currentFilter !== 'alert') {
@@ -372,6 +402,10 @@ function renderParc() {
         const m = monthsSinceDEG(v['Date DEG']);
         return m !== null && m >= 8.5;
       });
+      if (!vehicles.length) return;
+    }
+    if (currentFilter === 'km-alert') {
+      vehicles = vehicles.filter(v => parseInt(v['Kilométrage']||0) >= 19000);
       if (!vehicles.length) return;
     }
 
@@ -397,14 +431,15 @@ function renderParc() {
       if (months !== null && months >= 7 && months < 8.5) degExtra = `<span class="deg-days">⚡ Renouvellement proche</span>`;
 
       rows += `
-        <tr class="${isAlert ? 'row-alert' : ''} ${isVendu ? 'row-vendu' : ''}">
+        <tr class="${isAlert && !sortie ? 'row-alert' : ''} ${isVendu ? 'row-vendu' : ''} ${sortie ? 'row-history' : ''}">
           <td><strong>${v['Modèle']||''}</strong></td>
           <td><span class="plate">${v['Immatriculation']||''}</span></td>
           <td>
             <div class="km-bar-wrap">
-              <span class="km-val">${km.toLocaleString('fr-FR')} km</span>
+              <span class="km-val" style="${km >= 19000 ? 'color:var(--red);font-weight:700;' : ''}">${km.toLocaleString('fr-FR')} km ${km >= 19000 ? '⚠' : ''}</span>
               <div class="km-bar"><div class="km-fill ${kmClass(km)}" style="width:${kmPct(km)}%"></div></div>
             </div>
+            ${km >= 19000 ? '<div style="font-size:10px;color:var(--red);margin-top:2px;">Seuil 19 000 km dépassé</div>' : ''}
           </td>
           <td>
             <div class="deg-cell ${dc}">
@@ -414,6 +449,7 @@ function renderParc() {
             </div>
           </td>
           <td>${formatDate(v['Entrée Système']||'')}</td>
+          <td>${sortie ? `<span style="font-size:11px;color:var(--text-muted);">${formatDate(v['Sortie Système'])}</span>` : '—'}</td>
           <td>
             <span class="badge ${isVendu ? 'vendu' : isAlert ? 'critique' : 'actif'}">
               ${isAlert && !isVendu ? '<i class="ti ti-alert-triangle"></i> ' : ''}${statut}
@@ -443,6 +479,7 @@ function renderParc() {
               <th>Kilométrage</th>
               <th>Date DEG</th>
               <th>Entrée système</th>
+              <th>Sortie système</th>
               <th>Statut</th>
               <th>Client / Vendeur</th>
               <th>Livraison prévisionnelle</th>
