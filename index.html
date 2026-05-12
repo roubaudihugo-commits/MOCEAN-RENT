@@ -1,1 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mocean Rent — Tableau de bord</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<style>
+:root {
+  --blue:#002C5F;--blue-light:#E6F1FB;--blue-mid:#185FA5;
+  --green:#3B6D11;--green-light:#EAF3DE;
+  --red:#A32D2D;--red-light:#FCEBEB;
+  --amber:#854F0B;--amber-light:#FAEEDA;
+  --orange:#BA4A00;
+  --bg:#F0F2F5;--surface:#fff;--surface-2:#F8F9FA;
+  --border:rgba(0,0,0,0.09);--text:#1A1A2E;--text-muted:#6B7280;
+  --radius:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;}
+.dashboard{padding:1.25rem 1rem 3rem;max-width:1200px;margin:0 auto;}
 
+/* HEADER */
+.header{background:var(--blue);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.header-left{display:flex;align-items:center;gap:14px;}
+.logo{width:44px;height:44px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--blue);flex-shrink:0;}
+.header h1{color:white;font-size:20px;font-weight:600;}
+.header p{color:rgba(255,255,255,0.6);font-size:12px;margin-top:2px;}
+.header-right{text-align:right;}
+.header-date{color:white;font-size:14px;font-weight:600;}
+.header-sync{color:rgba(255,255,255,0.55);font-size:11px;margin-top:3px;}
+
+/* SYNC BAR */
+.sync-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:9px 16px;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.sync-info{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;}
+.dot.loading{background:var(--amber);animation:pulse 1s infinite;}
+.dot.error{background:var(--red);}
+.dot.saving{background:var(--blue-mid);animation:pulse 0.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.btn{font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.15s;}
+.btn:hover{border-color:var(--blue);color:var(--blue);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:5px;}
+.tab{flex:1;padding:8px 16px;border-radius:var(--radius);border:none;background:transparent;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.tab:hover{background:var(--surface-2);color:var(--text);}
+.tab.active{background:var(--blue);color:white;}
+.tab .tab-badge{background:rgba(255,255,255,0.25);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600;}
+.tab:not(.active) .tab-badge{background:var(--blue-light);color:var(--blue-mid);}
+.tab.tab-alert .tab-badge{background:var(--amber-light);color:var(--amber);}
+.tab.active.tab-alert .tab-badge{background:rgba(255,255,255,0.25);}
+
+/* ERROR */
+.error-box{background:var(--red-light);border:1px solid #F7C1C1;border-radius:var(--radius);padding:12px 16px;margin-bottom:1rem;font-size:13px;color:var(--red);display:flex;align-items:center;gap:8px;}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1rem;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.kpi-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;display:flex;align-items:center;gap:4px;}
+.kpi-val{font-size:26px;font-weight:700;line-height:1;}
+.kpi-val.blue{color:var(--blue)}.kpi-val.green{color:var(--green)}.kpi-val.red{color:var(--red)}.kpi-val.amber{color:var(--amber)}.kpi-val.orange{color:var(--orange)}
+.kpi-sub{font-size:10px;color:var(--text-muted);margin-top:3px;}
+
+/* FILTERS */
+.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+.filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text-muted);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.filter-btn:hover{border-color:var(--blue);color:var(--blue);}
+.filter-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
+
+.section-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;margin-top:1rem;display:flex;align-items:center;gap:6px;}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text-muted);margin-bottom:8px;align-items:center;}
+.legend-item{display:flex;align-items:center;gap:4px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+
+/* AGENCY BLOCK */
+.agency-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:1rem;overflow:hidden;}
+.agency-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--blue);flex-wrap:wrap;gap:8px;}
+.agency-name{font-size:14px;font-weight:600;color:white;display:flex;align-items:center;gap:8px;}
+.agency-stats{display:flex;gap:8px;flex-wrap:wrap;}
+.pill{font-size:11px;padding:2px 10px;border-radius:10px;font-weight:600;}
+.pill.active{background:rgba(255,255,255,0.2);color:white;}
+.pill.sold{background:var(--red-light);color:var(--red);}
+.pill.alert{background:var(--amber-light);color:var(--amber);}
+.pill.ready{background:var(--green-light);color:var(--green);}
+
+/* TABLE */
+.vehicle-table{width:100%;border-collapse:collapse;}
+.vehicle-table th{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.vehicle-table td{font-size:12px;padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+.vehicle-table tr:last-child td{border-bottom:none;}
+.vehicle-table tr:hover td{background:#F0F4FF;}
+.vehicle-table tr.row-vendu td{opacity:0.75;}
+.vehicle-table tr.row-alert td{background:#FFFBF0;}
+.vehicle-table tr.row-history td{opacity:0.45;background:var(--surface-2);font-style:italic;}
+.vehicle-table tr.row-ready td{background:#F0FFF4;border-left:3px solid var(--green);}
+
+/* EDITABLE */
+.editable{cursor:pointer;border-radius:4px;padding:2px 5px;transition:background 0.15s;display:inline-block;min-width:40px;}
+.editable:hover{background:var(--blue-light);outline:1px dashed var(--blue-mid);}
+.editable:hover::after{content:'✏';font-size:9px;margin-left:3px;opacity:0.5;}
+.editable.saving{background:#E6F1FB;outline:1px solid var(--blue-mid);}
+.editable.saved{background:var(--green-light);outline:1px solid var(--green);}
+.editable.err{background:var(--red-light);outline:1px solid var(--red);}
+.cell-input{font-size:12px;font-family:inherit;border:2px solid var(--blue-mid);border-radius:4px;padding:2px 5px;outline:none;background:white;width:100%;min-width:70px;max-width:150px;}
+.cell-select{font-size:12px;font-family:inherit;border:2px solid var(--blue-mid);border-radius:4px;padding:2px 5px;outline:none;background:white;cursor:pointer;}
+
+.plate{font-family:'Courier New',monospace;font-size:11px;background:var(--surface-2);border:1px solid var(--border);padding:2px 7px;border-radius:4px;letter-spacing:0.3px;white-space:nowrap;}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;}
+.badge.actif{background:var(--green-light);color:var(--green);}
+.badge.vendu{background:var(--red-light);color:var(--red);}
+.badge.attendu{background:var(--blue-light);color:var(--blue-mid);}
+.badge.ready{background:var(--green-light);color:var(--green);}
+
+.km-bar-wrap{display:flex;align-items:center;gap:6px;}
+.km-val{font-size:12px;font-weight:600;min-width:60px;}
+.km-bar{height:4px;border-radius:2px;flex:1;background:var(--border);min-width:35px;max-width:70px;}
+.km-fill{height:100%;border-radius:2px;}
+.km-fill.low{background:var(--green)}.km-fill.mid{background:var(--amber)}.km-fill.high{background:var(--red)}
+.deg-cell{font-size:11px;white-space:nowrap;}
+.deg-ok{color:var(--text-muted)}.deg-warn{color:var(--amber);font-weight:600}.deg-crit{color:var(--red);font-weight:600}
+.deg-days{font-size:10px;display:block;margin-top:1px;}
+
+/* EDIT HINT */
+.edit-hint{font-size:11px;color:var(--blue-mid);background:var(--blue-light);padding:6px 12px;border-radius:var(--radius);margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:var(--radius);font-size:13px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;display:flex;align-items:center;gap:8px;color:white;}
+.toast.show{opacity:1;}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+.toast.info{background:var(--blue);}
+
+/* READY BANNER */
+.ready-banner{background:var(--green-light);border:1px solid #C0DD97;border-radius:var(--radius);padding:10px 16px;margin-bottom:1rem;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;}
+
+.hidden{display:none!important;}
+.loading-state{text-align:center;padding:3rem 1rem;color:var(--text-muted);font-size:14px;}
+.loading-state i{font-size:32px;display:block;margin-bottom:12px;color:var(--blue);animation:spin 1s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.footer{text-align:center;font-size:11px;color:var(--text-muted);margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+@media(max-width:700px){
+  .vehicle-table th:nth-child(n+7),.vehicle-table td:nth-child(n+7){display:none;}
+  .tabs{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<main class="dashboard">
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">H</div>
+    <div><h1>Mocean Rent</h1><p>Gestion du parc locatif — Concession Hyundai</p></div>
+  </div>
+  <div class="header-right">
+    <div class="header-date" id="current-date"></div>
+    <div class="header-sync" id="last-sync">Chargement...</div>
+  </div>
+</header>
+
+<div class="sync-bar">
+  <div class="sync-info"><span class="dot loading" id="sync-dot"></span><span id="sync-status">Connexion...</span></div>
+  <button class="btn" onclick="loadData()"><i class="ti ti-refresh"></i> Actualiser</button>
+</div>
+
+<div id="error-box" class="error-box hidden"><i class="ti ti-alert-circle"></i><span id="error-text"></span></div>
+<div id="ready-banner" class="ready-banner hidden"><i class="ti ti-transfer-in"></i><span id="ready-text"></span></div>
+
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-car"></i> Parc total</div><div class="kpi-val blue" id="kpi-total">—</div><div class="kpi-sub">véhicules</div></div>
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-check"></i> En parc</div><div class="kpi-val green" id="kpi-active">—</div><div class="kpi-sub">disponibles</div></div>
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-tag"></i> Vendus</div><div class="kpi-val red" id="kpi-sold">—</div><div class="kpi-sub">en cession</div></div>
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-alert-triangle"></i> Alertes DEG</div><div class="kpi-val orange" id="kpi-alert">—</div><div class="kpi-sub">≥ 8,5 mois</div></div>
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-gauge"></i> Alertes km</div><div class="kpi-val red" id="kpi-km">—</div><div class="kpi-sub">≥ 19 000 km</div></div>
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-refresh"></i> Renouvellements</div><div class="kpi-val amber" id="kpi-renew">—</div><div class="kpi-sub">attendus</div></div>
+  <div class="kpi"><div class="kpi-label"><i class="ti ti-transfer-in"></i> Prêts à entrer</div><div class="kpi-val green" id="kpi-ready">—</div><div class="kpi-sub">immat + entrée OK</div></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" id="tab-parc" onclick="switchTab('parc',this)"><i class="ti ti-car"></i> Parc actif <span class="tab-badge" id="tab-parc-count">—</span></button>
+  <button class="tab tab-alert" id="tab-renouv" onclick="switchTab('renouv',this)"><i class="ti ti-refresh"></i> Renouvellements <span class="tab-badge" id="tab-renouv-count">—</span></button>
+</div>
+
+<!-- PANEL PARC -->
+<div id="panel-parc">
+  <div class="edit-hint"><i class="ti ti-pencil"></i> <strong>Édition directe</strong> — Cliquez sur une cellule pour la modifier. Sauvegarde automatique dans Google Sheets.</div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)"><i class="ti ti-layout-grid"></i> Toutes</button>
+    <button class="filter-btn" onclick="setFilter('Bussy',this)"><i class="ti ti-map-pin"></i> Bussy</button>
+    <button class="filter-btn" onclick="setFilter('St-Maximin',this)"><i class="ti ti-map-pin"></i> St-Maximin</button>
+    <button class="filter-btn" onclick="setFilter('Meaux',this)"><i class="ti ti-map-pin"></i> Meaux</button>
+    <button class="filter-btn" onclick="setFilter('sold',this)"><i class="ti ti-tag"></i> Vendus</button>
+    <button class="filter-btn" onclick="setFilter('alert',this)"><i class="ti ti-alert-triangle"></i> Alertes DEG</button>
+    <button class="filter-btn" onclick="setFilter('km-alert',this)"><i class="ti ti-gauge"></i> Alertes km</button>
+    <button class="filter-btn" id="btn-history" onclick="toggleHistory(this)"><i class="ti ti-history"></i> Historique</button>
+  </div>
+  <div class="legend">
+    <span style="font-weight:600;color:var(--text);">DEG :</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>&lt;7 mois</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>7–8,5 mois</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>≥8,5 mois</span>
+    <span style="font-weight:600;color:var(--text);margin-left:8px;">KM :</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>&lt;10 000</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--amber)"></span>10–19 000</span>
+    <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>≥19 000</span>
+  </div>
+  <div id="loading" class="loading-state"><i class="ti ti-loader"></i>Chargement depuis Google Sheets...</div>
+  <div id="parc-container"></div>
+</div>
+
+<!-- PANEL RENOUVELLEMENTS -->
+<div id="panel-renouv" class="hidden">
+  <div class="edit-hint"><i class="ti ti-pencil"></i> <strong>Édition directe</strong> — Renseignez l'immatriculation et la date d'entrée système pour basculer un véhicule en flotte active.</div>
+  <div class="filters" id="renouv-filters">
+    <button class="filter-btn active" onclick="setRenouv('General',this)"><i class="ti ti-layout-grid"></i> Tous</button>
+    <button class="filter-btn" onclick="setRenouv('Bussy',this)"><i class="ti ti-map-pin"></i> Bussy</button>
+    <button class="filter-btn" onclick="setRenouv('St-Maximin',this)"><i class="ti ti-map-pin"></i> St-Maximin</button>
+    <button class="filter-btn" onclick="setRenouv('Meaux',this)"><i class="ti ti-map-pin"></i> Meaux</button>
+  </div>
+  <div id="renouv-container"></div>
+</div>
+
+<footer class="footer">Mocean Rent · Concession Hyundai · Google Sheets · <span id="footer-date"></span></footer>
+</main>
+
+<script>
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbw10OVIxF781hEfllj8Bnz-sj-18LLrfE0i-8ZXXKQ1Fc_RFEg7o3wj25L0FSkRjjIX/exec';
+
+const now = new Date();
+const dateStr = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('current-date').textContent = dateStr.charAt(0).toUpperCase()+dateStr.slice(1);
+document.getElementById('footer-date').textContent = now.toLocaleDateString('fr-FR');
+
+let allData = {parc:{},renewals:{}};
+let currentFilter = 'all';
+let currentRenouv = 'General';
+let showHistory = false;
+let currentTab = 'parc';
+
+// ===== UTILS =====
+function monthsSinceDEG(d) {
+  if (!d||d.toString().trim()==='') return null;
+  try {
+    const p = d.toString().split('T')[0].split('-');
+    const deg = new Date(+p[0],+p[1]-1,+p[2]);
+    if (isNaN(deg)) return null;
+    return Math.round(((new Date()-deg)/(1000*60*60*24*30.44))*10)/10;
+  } catch(e){return null;}
+}
+
+function formatDate(d) {
+  if (!d||d.toString().trim()==='') return '';
+  try {
+    const s = d.toString().split('T')[0];
+    const p = s.split('-');
+    if (p.length===3&&p[0].length===4) return `${p[2]}/${p[1]}/${p[0]}`;
+    return d.toString();
+  } catch(e){return d.toString();}
+}
+
+function degClass(m) {
+  if (m===null) return 'deg-ok';
+  if (m>=8.5) return 'deg-crit';
+  if (m>=7) return 'deg-warn';
+  return 'deg-ok';
+}
+function kmClass(km){return km>=19000?'high':km>10000?'mid':'low';}
+function kmPct(km){return Math.round((Math.min(km,20000)/20000)*100);}
+
+// ===== TOAST =====
+function showToast(msg,type='info'){
+  const t=document.getElementById('toast');
+  t.className='toast show '+type;
+  t.innerHTML=`<i class="ti ti-${type==='success'?'check':type==='error'?'alert-circle':'info-circle'}"></i> ${msg}`;
+  setTimeout(()=>t.className='toast',2500);
+}
+
+// ===== SAVE =====
+async function saveCell(sheetName,row,column,value,el){
+  el.classList.add('saving');
+  document.getElementById('sync-dot').className='dot saving';
+  document.getElementById('sync-status').textContent='Sauvegarde...';
+  try {
+    const res = await fetch(APPS_URL,{method:'POST',body:JSON.stringify({sheetName,row,column,value})});
+    const data = await res.json();
+    if(data.success){
+      el.classList.remove('saving');el.classList.add('saved');
+      setTimeout(()=>el.classList.remove('saved'),2000);
+      showToast('Sauvegardé !','success');
+      document.getElementById('sync-dot').className='dot';
+      document.getElementById('sync-status').textContent='Synchronisé';
+      setTimeout(loadData,1500);
+    } else throw new Error(data.error||'Erreur');
+  } catch(err){
+    el.classList.remove('saving');el.classList.add('err');
+    setTimeout(()=>el.classList.remove('err'),3000);
+    showToast('Erreur : '+err.message,'error');
+    document.getElementById('sync-dot').className='dot error';
+  }
+}
+
+// ===== MAKE EDITABLE =====
+function makeEditable(el,sheetName,row,column,currentVal,type='text',options=null){
+  el.onclick=function(e){
+    e.stopPropagation();
+    if(el.querySelector('input,select')) return;
+    const origHTML=el.innerHTML;
+    let input;
+    if(options){
+      input=document.createElement('select');
+      input.className='cell-select';
+      options.forEach(opt=>{
+        const o=document.createElement('option');
+        o.value=opt;o.textContent=opt;
+        if(opt===currentVal||opt===(currentVal||'')) o.selected=true;
+        input.appendChild(o);
+      });
+    } else {
+      input=document.createElement('input');
+      input.type=type;input.className='cell-input';
+      input.value=currentVal||'';
+    }
+    el.innerHTML='';el.appendChild(input);
+    input.focus();if(input.select)input.select();
+
+    async function commit(){
+      const newVal=input.value.trim();
+      el.innerHTML=origHTML;
+      if(newVal!==currentVal){
+        el.textContent=newVal||'—';
+        currentVal=newVal;
+        await saveCell(sheetName,row,column,newVal,el);
+      }
+    }
+    input.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();commit();}
+      if(e.key==='Escape'){el.innerHTML=origHTML;}
+    });
+    if(options) input.addEventListener('change',commit);
+    else input.addEventListener('blur',commit);
+  };
+}
+
+// ===== LOAD =====
+async function loadData(){
+  const dot=document.getElementById('sync-dot');
+  const status=document.getElementById('sync-status');
+  document.getElementById('error-box').classList.add('hidden');
+  dot.className='dot loading';status.textContent='Synchronisation...';
+  try {
+    const res=await fetch(APPS_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    allData=data;
+    dot.className='dot';
+    const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const total=Object.values(data.parc).flat().length;
+    status.textContent=`${total} véhicules chargés`;
+    document.getElementById('last-sync').textContent=`Sync : ${t}`;
+    document.getElementById('loading').classList.add('hidden');
+    renderAll();
+  } catch(err){
+    dot.className='dot error';status.textContent='Erreur';
+    document.getElementById('error-text').textContent='Impossible de charger : '+err.message;
+    document.getElementById('error-box').classList.remove('hidden');
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+
+// ===== KPIs =====
+function updateKPIs(){
+  const all=Object.values(allData.parc).flat();
+  const active=all.filter(v=>(v['Statut']||'').toLowerCase()!=='vendu');
+  const sold=all.filter(v=>(v['Statut']||'').toLowerCase()==='vendu');
+  const alerts=all.filter(v=>{const m=monthsSinceDEG(v['Date DEG']);return m!==null&&m>=8.5;});
+  const kmAlerts=all.filter(v=>parseInt(v['Kilométrage']||0)>=19000&&!(v['Sortie Système']&&v['Sortie Système'].toString().trim()!==''));
+  const allRenouv=(allData.renewals&&allData.renewals['General'])||[];
+  const ready=allRenouv.filter(r=>r._ready);
+
+  document.getElementById('kpi-total').textContent=all.length;
+  document.getElementById('kpi-active').textContent=active.length;
+  document.getElementById('kpi-sold').textContent=sold.length;
+  document.getElementById('kpi-alert').textContent=alerts.length;
+  document.getElementById('kpi-km').textContent=kmAlerts.length;
+  document.getElementById('kpi-renew').textContent=allRenouv.length;
+  document.getElementById('kpi-ready').textContent=ready.length;
+  document.getElementById('tab-parc-count').textContent=all.length;
+  document.getElementById('tab-renouv-count').textContent=allRenouv.length;
+
+  // Banner prêts à entrer
+  const banner=document.getElementById('ready-banner');
+  if(ready.length>0){
+    document.getElementById('ready-text').textContent=`${ready.length} véhicule${ready.length>1?'s':''} prêt${ready.length>1?'s':''} à intégrer la flotte active — immatriculation et date d'entrée renseignées.`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+}
+
+// ===== RENDER PARC =====
+function renderParc(){
+  const container=document.getElementById('parc-container');
+  container.innerHTML='';
+  const agencyOrder=['Bussy','St-Maximin','Meaux'];
+
+  agencyOrder.forEach(agence=>{
+    let vehicles=(allData.parc[agence]||[]).slice();
+    if(!vehicles.length) return;
+    if(!showHistory) vehicles=vehicles.filter(v=>!v['Sortie Système']||v['Sortie Système'].toString().trim()==='');
+    if(currentFilter!=='all'&&currentFilter!=='sold'&&currentFilter!=='alert'&&currentFilter!=='km-alert'){
+      if(agence!==currentFilter) return;
+    }
+    if(currentFilter==='sold'){vehicles=vehicles.filter(v=>(v['Statut']||'').toLowerCase()==='vendu');if(!vehicles.length)return;}
+    if(currentFilter==='alert'){vehicles=vehicles.filter(v=>{const m=monthsSinceDEG(v['Date DEG']);return m!==null&&m>=8.5;});if(!vehicles.length)return;}
+    if(currentFilter==='km-alert'){vehicles=vehicles.filter(v=>parseInt(v['Kilométrage']||0)>=19000);if(!vehicles.length)return;}
+
+    const activeCount=vehicles.filter(v=>(v['Statut']||'').toLowerCase()!=='vendu').length;
+    const soldCount=vehicles.filter(v=>(v['Statut']||'').toLowerCase()==='vendu').length;
+    const alertCount=vehicles.filter(v=>{const m=monthsSinceDEG(v['Date DEG']);return m!==null&&m>=8.5;}).length;
+
+    const block=document.createElement('div');
+    block.className='agency-block';
+    block.innerHTML=`
+      <div class="agency-header">
+        <div class="agency-name"><i class="ti ti-map-pin"></i> Agence ${agence}</div>
+        <div class="agency-stats">
+          ${activeCount>0?`<span class="pill active">${activeCount} actif${activeCount>1?'s':''}</span>`:''}
+          ${soldCount>0?`<span class="pill sold">${soldCount} vendu${soldCount>1?'s':''}</span>`:''}
+          ${alertCount>0?`<span class="pill alert">⚠ ${alertCount} alerte${alertCount>1?'s':''}</span>`:''}
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="vehicle-table">
+          <thead><tr>
+            <th>Modèle</th><th>Immatriculation</th><th>Kilométrage</th>
+            <th>Date DEG</th><th>Date MEC</th><th>Entrée système</th><th>Sortie système</th>
+            <th>Statut</th><th>Client vendu</th><th>Vendeur</th>
+            <th>Livraison prév.</th><th>Livraison</th>
+          </tr></thead>
+          <tbody id="tbody-${agence.replace(/[^a-z]/gi,'_')}"></tbody>
+        </table>
+      </div>`;
+    container.appendChild(block);
+
+    const tbody=document.getElementById(`tbody-${agence.replace(/[^a-z]/gi,'_')}`);
+    vehicles.forEach(v=>{
+      const statut=v['Statut']||'Actif';
+      const isVendu=statut.toLowerCase()==='vendu';
+      const sortie=v['Sortie Système']&&v['Sortie Système'].toString().trim()!=='';
+      const months=monthsSinceDEG(v['Date DEG']);
+      const isAlert=months!==null&&months>=8.5;
+      const km=parseInt(v['Kilométrage']||0);
+      const row=v['_row'];
+      const dc=degClass(months);
+
+      const tr=document.createElement('tr');
+      tr.className=`${isAlert&&!sortie?'row-alert':''} ${isVendu?'row-vendu':''} ${sortie?'row-history':''}`.trim();
+
+      tr.innerHTML=`
+        <td><strong class="editable">${v['Modèle']||'—'}</strong></td>
+        <td><span class="plate editable">${v['Immatriculation']||'—'}</span></td>
+        <td>
+          <div class="km-bar-wrap">
+            <span class="km-val editable" style="${km>=19000?'color:var(--red);font-weight:700;':''}">${km.toLocaleString('fr-FR')} km${km>=19000?' ⚠':''}</span>
+            <div class="km-bar"><div class="km-fill ${kmClass(km)}" style="width:${kmPct(km)}%"></div></div>
+          </div>
+        </td>
+        <td>
+          <div class="deg-cell ${dc}">
+            <span class="editable">${formatDate(v['Date DEG'])||'—'}</span>
+            <span class="deg-days">${months!==null?months+' mois':''}</span>
+            ${isAlert?'<span class="deg-days" style="color:var(--red);">⚠ Alerte</span>':''}
+            ${months!==null&&months>=7&&months<8.5?'<span class="deg-days" style="color:var(--amber);">⚡ Proche</span>':''}
+          </div>
+        </td>
+        <td><span class="editable">${formatDate(v['Date MEC'])||'—'}</span></td>
+        <td><span class="editable">${formatDate(v['Entrée Système'])||'—'}</span></td>
+        <td><span class="editable">${formatDate(v['Sortie Système'])||'—'}</span></td>
+        <td><span class="editable badge ${isVendu?'vendu':'actif'}">${statut}</span></td>
+        <td><span class="editable">${v['Vendu client']||'—'}</span></td>
+        <td><span class="editable">${v['Vendeur']||'—'}</span></td>
+        <td><span class="editable" style="${v['Livraison Prévisionnelle']?'color:var(--blue-mid);font-weight:600;':''}">${formatDate(v['Livraison Prévisionnelle'])||'—'}</span></td>
+        <td>${isVendu?(v['Livraison']&&v['Livraison'].toString().trim()!==''?`<span class="badge actif editable"><i class="ti ti-check"></i> ${v['Livraison']}</span>`:`<span class="badge editable" style="background:var(--amber-light);color:var(--amber);">En attente</span>`):'—'}</td>
+      `;
+      tbody.appendChild(tr);
+
+      const cells=tr.querySelectorAll('.editable');
+      const cols=['Modèle','Immatriculation','Kilométrage','Date DEG','Date MEC','Entrée Système','Sortie Système','Statut','Vendu client','Vendeur','Livraison Prévisionnelle','Livraison'];
+      const vals=[v['Modèle'],v['Immatriculation'],km,formatDate(v['Date DEG']),formatDate(v['Date MEC']),formatDate(v['Entrée Système']),formatDate(v['Sortie Système']),statut,v['Vendu client'],v['Vendeur'],formatDate(v['Livraison Prévisionnelle']),v['Livraison']];
+      const types=['text','text','number','text','text','text','text','select','text','text','text','text'];
+      cells.forEach((cell,i)=>makeEditable(cell,agence,row,cols[i],vals[i]||'',types[i],types[i]==='select'?['Actif','Vendu']:null));
+    });
+  });
+}
+
+// ===== RENDER RENOUVELLEMENTS =====
+function renderRenouv(){
+  const container=document.getElementById('renouv-container');
+  container.innerHTML='';
+  const renewals=(allData.renewals&&allData.renewals[currentRenouv])||[];
+
+  if(!renewals.length){
+    container.innerHTML='<p style="font-size:13px;color:var(--text-muted);padding:16px;">Aucun renouvellement.</p>';
+    return;
+  }
+
+  // Grouper par agence si vue générale
+  const groups=currentRenouv==='General'
+    ?['Bussy','St-Maximin','Meaux'].reduce((acc,a)=>{acc[a]=renewals.filter(r=>r.Agence===a);return acc;},{})
+    :{[currentRenouv]:renewals};
+
+  Object.entries(groups).forEach(([agence,items])=>{
+    if(!items.length) return;
+    const readyCount=items.filter(r=>r._ready).length;
+    const block=document.createElement('div');
+    block.className='agency-block';
+    block.innerHTML=`
+      <div class="agency-header">
+        <div class="agency-name"><i class="ti ti-map-pin"></i> ${agence}</div>
+        <div class="agency-stats">
+          <span class="pill active">${items.length} véhicule${items.length>1?'s':''}</span>
+          ${readyCount>0?`<span class="pill ready">✓ ${readyCount} prêt${readyCount>1?'s':''} à entrer</span>`:''}
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="vehicle-table">
+          <thead><tr>
+            <th>Modèle</th><th>Châssis</th><th>Immatriculation</th>
+            <th>Date DEG</th><th>Date MEC</th><th>Entrée Système</th>
+            <th>Kilométrage</th><th>Statut</th><th>Commentaire</th>
+          </tr></thead>
+          <tbody id="rtbody-${agence.replace(/[^a-z]/gi,'_')}"></tbody>
+        </table>
+      </div>`;
+    container.appendChild(block);
+
+    const tbody=document.getElementById(`rtbody-${agence.replace(/[^a-z]/gi,'_')}`);
+    items.forEach(r=>{
+      const isReady=r._ready;
+      const tr=document.createElement('tr');
+      tr.className=isReady?'row-ready':'';
+      tr.innerHTML=`
+        <td><strong class="editable">${r['Modèle']||'—'}</strong></td>
+        <td><span class="plate editable" style="font-size:10px;">${r['Châssis']||'—'}</span></td>
+        <td><span class="editable ${!r['Immatriculation']?'':'plate'}" style="${!r['Immatriculation']?'color:var(--text-muted);font-style:italic;':''}">${r['Immatriculation']||'À renseigner'}</span></td>
+        <td><span class="editable">${formatDate(r['Date DEG'])||'—'}</span></td>
+        <td><span class="editable">${formatDate(r['Date MEC'])||'—'}</span></td>
+        <td><span class="editable ${!r['Entrée Système']?'':''}\" style="${!r['Entrée Système']?'color:var(--text-muted);font-style:italic;':''}">${formatDate(r['Entrée Système'])||'À renseigner'}</span></td>
+        <td><span class="editable">${r['Kilométrage']||'—'}</span></td>
+        <td>
+          <span class="editable badge ${isReady?'ready':'attendu'}">
+            ${isReady?'<i class="ti ti-transfer-in"></i> Prêt à entrer':r['Statut']||'Attendu'}
+          </span>
+        </td>
+        <td><span class="editable" style="font-size:11px;${r['Commentaire']?'color:var(--amber);':''}">${r['Commentaire']||'—'}</span></td>
+      `;
+      tbody.appendChild(tr);
+
+      const cells=tr.querySelectorAll('.editable');
+      const sheetName=r['_sheet']||`Renouvellements ${agence}`;
+      const row=r['_row'];
+      const cols=['Modèle','Châssis','Immatriculation','Date DEG','Date MEC','Entrée Système','Kilométrage','Statut','Commentaire'];
+      const vals=[r['Modèle'],r['Châssis'],r['Immatriculation'],formatDate(r['Date DEG']),formatDate(r['Date MEC']),formatDate(r['Entrée Système']),r['Kilométrage'],r['Statut'],r['Commentaire']];
+      cells.forEach((cell,i)=>makeEditable(cell,sheetName,row,cols[i],vals[i]||'','text',cols[i]==='Statut'?['Attendu','Livré','Annulé']:null));
+    });
+  });
+}
+
+function renderAll(){updateKPIs();if(currentTab==='parc')renderParc();else renderRenouv();}
+
+// ===== TABS =====
+function switchTab(tab,btn){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-parc').classList.toggle('hidden',tab!=='parc');
+  document.getElementById('panel-renouv').classList.toggle('hidden',tab!=='renouv');
+  if(Object.keys(allData.parc).length) renderAll();
+}
+
+function setFilter(f,btn){
+  document.querySelectorAll('#panel-parc .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');currentFilter=f;
+  if(Object.keys(allData.parc).length) renderParc();
+}
+
+function setRenouv(agence,btn){
+  document.querySelectorAll('#renouv-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');currentRenouv=agence;
+  if(Object.keys(allData.parc).length) renderRenouv();
+}
+
+function toggleHistory(btn){
+  showHistory=!showHistory;
+  btn.classList.toggle('active',showHistory);
+  btn.innerHTML=showHistory?'<i class="ti ti-eye-off"></i> Masquer historique':'<i class="ti ti-history"></i> Historique';
+  if(Object.keys(allData.parc).length) renderParc();
+}
+
+loadData();
+setInterval(loadData,5*60*1000);
+</script>
+</body>
+</html>
