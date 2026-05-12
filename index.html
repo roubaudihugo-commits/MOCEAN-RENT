@@ -618,7 +618,7 @@ function renderParc(){
         <td><span class="editable">${formatDate(v['Date MEC'])||'—'}</span></td>
         <td><span class="editable">${formatDate(v['Entrée Système'])||'—'}</span></td>
         <td><span class="editable">${formatDate(v['Sortie Système'])||'—'}</span></td>
-        <td>${etatBadge}</td>
+        <td><span class="editable badge ${etat==='actif'?'actif':etat==='inactif'?'inactif':etat==='vendu'?'vendu':'sorti'}">${etat==='actif'?'Actif':etat==='inactif'?'<i class="ti ti-pause"></i> Inactif':etat==='vendu'?'<i class="ti ti-tag"></i> Vendu':'Historique'}</span></td>
         <td><span class="editable">${v['Vendu client']||'—'}</span></td>
         <td><span class="editable">${v['Vendeur']||'—'}</span></td>
         <td><span class="editable" style="${v['Livraison Prévisionnelle']?'color:var(--blue-mid);font-weight:600;':''}">${formatDate(v['Livraison Prévisionnelle'])||'—'}</span></td>
@@ -627,9 +627,24 @@ function renderParc(){
       tbody.appendChild(tr);
 
       const cells=tr.querySelectorAll('.editable');
-      const cols=['Modèle','Immatriculation','Kilométrage','Date DEG','Date MEC','Entrée Système','Sortie Système','_skip','Vendu client','Vendeur','Livraison Prévisionnelle','_skip2'];
-      const vals=[v['Modèle'],v['Immatriculation'],km,formatDate(v['Date DEG']),formatDate(v['Date MEC']),formatDate(v['Entrée Système']),formatDate(v['Sortie Système']),'',v['Vendu client'],v['Vendeur'],formatDate(v['Livraison Prévisionnelle']),''];
-      cells.forEach((cell,i)=>{if(cols[i]&&!cols[i].startsWith('_'))makeEditable(cell,agence,row,cols[i],vals[i]||'','text');});
+      // Attacher manuellement chaque cellule éditable par index de colonne
+      const editableCells = tr.querySelectorAll('.editable');
+      const editMap = [
+        {col:'Modèle', val:v['Modèle']},
+        {col:'Immatriculation', val:v['Immatriculation']},
+        {col:'Kilométrage', val:km},
+        {col:'Date DEG', val:formatDate(v['Date DEG'])},
+        {col:'Date MEC', val:formatDate(v['Date MEC'])},
+        {col:'Entrée Système', val:formatDate(v['Entrée Système'])},
+        {col:'Sortie Système', val:formatDate(v['Sortie Système'])},
+        {col:'Statut', val:statut, options:['Actif','Vendu','Inactif']},
+        {col:'Vendu client', val:v['Vendu client']},
+        {col:'Vendeur', val:v['Vendeur']},
+        {col:'Livraison Prévisionnelle', val:formatDate(v['Livraison Prévisionnelle'])},
+      ];
+      editableCells.forEach((cell,i)=>{
+        if(editMap[i]) makeEditable(cell,agence,row,editMap[i].col,editMap[i].val||'','text',editMap[i].options||null);
+      });
     });
   });
 }
