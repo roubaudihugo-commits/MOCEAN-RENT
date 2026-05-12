@@ -420,6 +420,7 @@ function renderParc() {
     vehicles.forEach(v => {
       const statut = (v['Statut']||'Actif');
       const isVendu = statut.toLowerCase() === 'vendu';
+      const sortie = v['Sortie Système'] && v['Sortie Système'].toString().trim() !== '';
       const months = monthsSinceDEG(v['Date DEG']);
       const isAlert = months !== null && months >= 8.5;
       const isWarn = months !== null && months >= 7 && months < 8.5;
